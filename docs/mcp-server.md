@@ -1,6 +1,6 @@
 # CodeGuard MCP Server
 
-The CodeGuard MCP server exposes all 23 core security rules as individual [Model Context Protocol](https://modelcontextprotocol.io/) tools over streamable HTTP. Deploy it once on your infrastructure and every AI coding assistant in your organization gets access to the same curated, versioned security guidance — no per-repo file installation needed.
+The CodeGuard MCP server exposes all 23 core security rules as individual [Model Context Protocol](https://modelcontextprotocol.io/) tools over streamable HTTP. Deploy it once on your infrastructure and every AI coding assistant in your organization gets access to the same curated, versioned security guidance — no per-repo rule bundle installation needed.
 
 !!! info "When to use the MCP server"
     The MCP server is best suited for teams that already operate MCP infrastructure and want a single, centrally managed source of CodeGuard rules. For most individual users and teams, [rule files or Agent Skills](install-paths.md) are simpler. See [Choosing an Install Path](install-paths.md#mcp-server) for a full comparison.
@@ -109,7 +109,7 @@ All settings are controlled via environment variables with the `CODEGUARD_` pref
 | `CODEGUARD_TRANSPORT` | `streamable-http` | `streamable-http` or `stdio` |
 | `CODEGUARD_RULES_DIR` | `sources/rules/core/` | Path to rule markdown files |
 
-Copy `.env.example` from `src/codeguard-mcp/` to `.env` and edit as needed before running.
+Set these as environment variables in your shell before running, for example `export CODEGUARD_PORT=9090`.
 
 ## Endpoints
 
