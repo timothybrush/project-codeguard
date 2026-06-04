@@ -3,6 +3,7 @@ description: Infrastructure as Code Security
 languages:
 - c
 - d
+- hcl
 - javascript
 - powershell
 - ruby
