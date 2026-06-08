@@ -65,43 +65,35 @@ def matches_tag_filter(rule_tags: list[str], filter_tags: list[str]) -> bool:
     return all(tag in rule_tags for tag in filter_tags)
 
 
-def update_skill_md(language_to_rules: dict[str, list[str]], skill_path: Path) -> None:
-    """
-    Update SKILL.md with language-to-rules mapping table.
-
-    Args:
-        language_to_rules: Dictionary mapping languages to rule files
-        skill_path: Path to SKILL.md file
-    """
-    table_lines = [
-        "| Language | Rule Files to Apply |",
-        "|----------|---------------------|",
-    ]
-
-    for language in sorted(language_to_rules.keys()):
-        rules = sorted(language_to_rules[language])
-        rules_str = ", ".join(rules)
-        table_lines.append(f"| {language} | {rules_str} |")
-
+def _inject_mapping_table(
+    skill_path: Path,
+    mapping: dict[str, list[str]],
+    *,
+    key_header: str,
+    marker_name: str,
+) -> None:
+    """Replace ``<!-- {marker_name}_START/END -->`` in SKILL.md with a sorted
+    two-column markdown table built from ``mapping``. Missing markers raise."""
+    rules_col = "Rule Files to Apply"
+    sep = f"|{'-' * (len(key_header) + 2)}|{'-' * (len(rules_col) + 2)}|"
+    table_lines = [f"| {key_header} | {rules_col} |", sep]
+    for key in sorted(mapping):
+        table_lines.append(f"| {key} | {', '.join(sorted(mapping[key]))} |")
     table = "\n".join(table_lines)
 
-    start_marker = "<!-- LANGUAGE_MAPPINGS_START -->"
-    end_marker = "<!-- LANGUAGE_MAPPINGS_END -->"
-
+    start_marker = f"<!-- {marker_name}_START -->"
+    end_marker = f"<!-- {marker_name}_END -->"
     content = skill_path.read_text(encoding="utf-8")
-
     if start_marker not in content or end_marker not in content:
         raise RuntimeError(
-            f"Invalid SKILL.md: language mappings section markers not found in {skill_path}"
+            f"Invalid SKILL.md: {marker_name} section markers not found in {skill_path}"
         )
 
     start_idx = content.index(start_marker)
     end_idx = content.index(end_marker) + len(end_marker)
-    new_section = f"\n\n{table}\n\n"
-    updated_content = content[:start_idx] + new_section + content[end_idx:]
-
-    skill_path.write_text(updated_content, encoding="utf-8")
-    print(f"Updated SKILL.md with language mappings")
+    updated = content[:start_idx] + f"\n\n{table}\n\n" + content[end_idx:]
+    skill_path.write_text(updated, encoding="utf-8")
+    print(f"Updated SKILL.md with {marker_name} table")
 
 
 def convert_rules(
@@ -182,6 +174,7 @@ def convert_rules(
 
     results = {"success": [], "errors": [], "skipped": []}
     language_to_rules = defaultdict(list)
+    tag_to_rules = defaultdict(list)
 
     # Process each file
     for md_file in md_files:
@@ -219,6 +212,9 @@ def convert_rules(
 
             for language in result.languages:
                 language_to_rules[language].append(result.filename)
+
+            for tag in result.tags:
+                tag_to_rules[tag].append(result.filename)
 
         except FileNotFoundError as e:
             error_msg = f"{md_file.name}: File not found - {e}"
@@ -267,7 +263,18 @@ def convert_rules(
         )
         output_skill_path.write_text(template_content, encoding="utf-8")
 
-        update_skill_md(language_to_rules, output_skill_path)
+        _inject_mapping_table(
+            output_skill_path,
+            language_to_rules,
+            key_header="Language",
+            marker_name="LANGUAGE_MAPPINGS",
+        )
+        _inject_mapping_table(
+            output_skill_path,
+            tag_to_rules,
+            key_header="Security Context (Tag)",
+            marker_name="TAG_MAPPINGS",
+        )
 
         for host_dir in SKILL_COPY_HOSTS:
             host_skill_dir = Path(output_dir) / host_dir / "skills" / "software-security"
