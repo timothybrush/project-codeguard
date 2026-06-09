@@ -67,6 +67,7 @@ LANGUAGE_TO_EXTENSIONS = {
     "wgsl": [".wgsl"],
     "html": [".html", ".htm"],
     "sql": [".sql", ".ddl", ".dml"],
+    "hcl": [".tf", ".tfvars", ".tf.json", ".hcl"]
 }
 
 # Reverse mapping: extension to language (for conversion from globs)
